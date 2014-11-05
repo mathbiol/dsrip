@@ -6,10 +6,10 @@ body {
   margin-right: auto;
   width: 500px;
   background-color: #f8f8f8;
-  font-size: 24px;
+  font-size: 16px;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #424547;
-  text-align: center;
+  text-align: left;
 }
 
 h1 {
@@ -20,7 +20,7 @@ h1 {
 }
 
 h3 {
-  font-size: 24px;
+  font-size: 16px;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #424547;
 }
@@ -30,7 +30,7 @@ p {
 }
 
 input {
-  font-size: 24px;
+  font-size: 16px;
 }
 
 input[type=text] {
