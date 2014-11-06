@@ -12,6 +12,10 @@ dsrip.encodeURL=function(u){
 dsrip.byId=function(id){
     return document.getElementById(id)
 }
+dsrip.dom=function(el){
+    return document.createElement(el)
+}
+
 dsrip.append=function(html){
     $(html).appendTo('#dsripDiv')
     return this
@@ -57,7 +61,7 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
 dsrip.li=function(id,ordDiv){ // processing of each element of the list for the first time
     if(!ordDiv){ordDiv = dsrip.byId('orderedResources')}
     if(!dsrip.byId(id)){ // if it doesn't exist, create it
-        $(ordDiv).append($('<li id="'+id+'"><b style="color:navy">'+decodeURIComponent(id)+'</b> <span style="color:green;background-color:yellow" id="edit_'+id+'" onclick="dsrip.editLi(this)">Edit</span><br><span id="val_'+id+'">'+
+        $(ordDiv).append($('<li id="'+id+'"><span id="head_'+id+'"><b style="color:navy"><a href="'+decodeURIComponent(id)+'" target=_blank>'+decodeURIComponent(id)+'</a></b> <span style="color:green;background-color:yellow" id="edit_'+id+'" onclick="dsrip.editLi(this)">Edit</span></span><br><span id="val_'+id+'">'+
         JSON.stringify(dsrip.dataResources[id],false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')
         +'</span></li>'))
         dsrip.fillSearchTarget(id);
@@ -65,8 +69,13 @@ dsrip.li=function(id,ordDiv){ // processing of each element of the list for the 
 }
 
 dsrip.li.update=function(k,ordDiv){
-   if(!ordDiv){ordDiv = dsrip.byId('orderedResources')}
-   $('#'+k).html('<b style="color:blue">'+decodeURIComponent(k)+'</b> <span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span><br><span id="val_'+k+'">'+JSON.stringify(dsrip.dataResources[k],false,1).replace(/,/g,'<br>').replace(/[{}]/g,''))+'</span>'
+   //if(!ordDiv){ordDiv = dsrip.byId('orderedResources')}
+   if(!dsrip.byId('val_'+k).beingEdited){
+       dsrip.byId(k).innerHTML='<span id="head_'+k+'"><a style="color:red" href="'+decodeURIComponent(k)+'" target=_blank>'+decodeURIComponent(k)+'</a> <span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span></span><br><span id="val_'+k+'">'+JSON.stringify(dsrip.dataResources[k],false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')+'</span>'
+   }else{
+       dsrip.byId('val_'+k).style.color='red'
+       $('#val_'+k+' > p > textarea').css('color','red')
+   }
    dsrip.fillSearchTarget(k)
 }
 
@@ -96,10 +105,66 @@ dsrip.doSearch=function(s){ // go over each entry and hide it or show it dependi
 }
 
 dsrip.editLi=function(that){
-    var k = that.id.slice(5)
+    var k = that.id.substring(that.id.indexOf('_')+1)
     var sp = dsrip.byId('val_'+k)
-    sp.style.color="red"
+    var dt = dsrip.dataResources[k]
+    sp.style.color="blue"
+
+    sp.innerHTML='' // clear
+    sp.beingEdited=true
+    Object.getOwnPropertyNames(dt).map(function(att){
+        var p = dsrip.dom('p'); p.id='editing_'+k+'.'+att
+        p.innerHTML=att+': '+'<textarea>'+dt[att]+'</textarea> <span style="color:red" onclick="dsrip.removeMyParent(this)">X</span>'
+        sp.appendChild(p)
+    })
+
+    // if there is no Save button add it
+    if(!dsrip.byId('save_'+k)){
+        var spSave = dsrip.dom('span')
+        spSave.id='save_'+k
+        spSave.style.color='red'
+        spSave.innerHTML=' Save'
+        spSave.onclick=function(){dsrip.saveLi(this)}
+        dsrip.byId('head_'+k).appendChild(spSave)
+        //dsrip.byId('edit_'+k).innerHTML+=' save';
+    }
+
     4
+}
+
+dsrip.saveLi=function(that){
+    // save vals
+    var k = that.id.substring(that.id.indexOf('_')+1);
+    pp = dsrip.byId('val_'+k).children
+    var j = 0 ; // lets make this as resiliant as possible, it is only one li at a time, no performance issues
+    var n = k.length+9 // length of the parameter sufix
+    var doc={}
+    for (var i = 0 ; i<pp.length;i++){
+        if(pp[i].id.substring(0,pp[i].id.indexOf('_'))=='editing'){ // to discount the possibility that other types of children were added
+            j++
+            doc[pp[i].id.substring(n)]=$('textarea',pp[i])[0].value
+        }
+        4//if(pp[i].id.)
+    }
+    dsrip.byId('val_'+k).beingEdited=false
+    dsrip.ref.child("/dataResources/"+k).set(doc) // save new contents
+    // remove save thrigger just pressed
+    dsrip.removeMe(that) 
+    
+}
+
+dsrip.removeMyParent=function(that){
+    var rmSoon=function(){
+        that.parentElement.parentElement.removeChild(that.parentElement)
+    }
+    setTimeout(rmSoon,100)
+}
+
+dsrip.removeMe=function(el){
+    var rmSoon=function(){
+       el.parentElement.removeChild(el) 
+    }
+    setTimeout(rmSoon,100)
 }
 
 
