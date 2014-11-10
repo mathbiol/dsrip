@@ -44,7 +44,7 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
         var qq = document.location.search.match(/q\=([^\=\&]+)/)
         if(!qq){qq=[]}
         var q="";if (qq.length==2){var q = decodeURIComponent(qq[1])}
-        dsrip.append('<div id="listResources">Find <input id="searchResources" value="'+q+'"> Add <input id="addResource" onkeyup="dsrip.addResource(this,event)"> <ol id="orderedResources"></ol></div>');
+        dsrip.append('<div id="listResources">Find <input id="searchResources" value="'+q+'" onclick="dsrip.doSearch(this.value)"> Add <input id="addResource" onkeyup="dsrip.addResource(this,event)"> <ol id="orderedResources"></ol></div>');
     }
     //dsrip.ref.once('value',function(x){
     dsrip.dataResources = x.val() // update the reference data, this may not be the efficinet way to do it
