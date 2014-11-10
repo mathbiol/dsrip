@@ -1,11 +1,12 @@
 console.log('dsrip.js loaded')
 dsrip={
     ref:new Firebase('https://dsrip.firebaseio.com'),
-    searchTarget:{}
+    searchTarget:{},
+    dataResources:{}
 };
 
 dsrip.encodeURL=function(u){
-    return encodeURIComponent('http://mathbiol.github.io/openHealth/?jobs/pqiSuffolk.js').replace(/\./g,'%2E')
+    return encodeURIComponent(u).replace(/\./g,'%2E')
 }
 
 // set datamodel
@@ -40,7 +41,10 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
     //if($('#numResources').length==0){$('<span id="numResources"></span>').appendTo('#dsripDiv')}
     dsrip.byId('dsripHeader').textContent = 'DSRIP data resources ('+n+')';
     if(!dsrip.byId('listResources')){ // Resource list template
-        dsrip.append('<div id="listResources">Find <input id="searchResources"><ol id="orderedResources"></ol></div>');
+        var qq = document.location.search.match(/q\=([^\=\&]+)/)
+        if(!qq){qq=[]}
+        var q="";if (qq.length==2){var q = decodeURIComponent(qq[1])}
+        dsrip.append('<div id="listResources">Find <input id="searchResources" value="'+q+'"> Add <input id="addResource" onkeyup="dsrip.addResource(this,event)"> <ol id="orderedResources"></ol></div>');
     }
     //dsrip.ref.once('value',function(x){
     dsrip.dataResources = x.val() // update the reference data, this may not be the efficinet way to do it
@@ -54,8 +58,9 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
         //console.log(evt)
         dsrip.doSearch(this.value);
     }
-
-    //})
+    // runn it if armed already
+    if(q.length>0){dsrip.doSearch(dsrip.encodeURL(dsrip.byId('searchResources').value))}
+    
 })
 
 dsrip.li=function(id,ordDiv){ // processing of each element of the list for the first time
@@ -65,6 +70,7 @@ dsrip.li=function(id,ordDiv){ // processing of each element of the list for the 
         JSON.stringify(dsrip.dataResources[id],false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')
         +'</span></li>'))
         dsrip.fillSearchTarget(id);
+        return dsrip.byId(id)
     }
 }
 
@@ -87,6 +93,29 @@ dsrip.ref.child("/dataResources").on("child_changed",function(x){
     dsrip.li.update(k);
 })
 
+// if child added, append it to the list
+dsrip.ref.child("/dataResources").on("child_added",function(x){
+    var v = x.val(), k = x.name()
+    console.log(k +' updated:',JSON.stringify(v,false,1));
+    dsrip.dataResources[k]=v;
+    var li = dsrip.li(k);
+    if(li){
+        if(dsrip.byId('addResource').value==li.id){ // if I'm the one who created it
+            li.parentNode.insertBefore(li,li.parentNode.firstChild)
+            dsrip.byId('edit_'+li.id).click() // edit it
+        }
+    }
+})
+
+dsrip.ref.child("/dataResources").on("child_removed",function(x){
+    var k = x.name();
+    var li = dsrip.byId(k);
+    if(li){
+        dsrip.removeMe(li)
+        delete dsrip.dataResources[k]
+    }
+})
+
 dsrip.fillSearchTarget=function(k){ // concatenate values of all fields of an entry as targets for search
     dsrip.searchTarget[k]=k;
     Object.getOwnPropertyNames(dsrip.dataResources[k]).map(function(p){
@@ -100,8 +129,17 @@ dsrip.doSearch=function(s){ // go over each entry and hide it or show it dependi
         if(dsrip.searchTarget[k].match(s)||s.length==0){
             li.hidden=false
         } else {li.hidden=true}
-        console.log(k,s)
+        //console.log(k,s)
     })
+}
+dsrip.enterTextArea=function(that,evt){
+    if(evt.keyCode==13&(!evt.shiftKey)){
+        console.log(that)
+        var k = that.parentElement.parentElement.parentElement.id;
+        that.value=that.value.slice(0,-1)
+        dsrip.byId('save_'+k).click();
+    }
+    
 }
 
 dsrip.editLi=function(that){
@@ -114,9 +152,13 @@ dsrip.editLi=function(that){
     sp.beingEdited=true
     Object.getOwnPropertyNames(dt).map(function(att){
         var p = dsrip.dom('p'); p.id='editing_'+k+'.'+att
-        p.innerHTML=att+': '+'<textarea>'+dt[att]+'</textarea> <span style="color:red" onclick="dsrip.removeMyParent(this)">X</span>'
+        p.innerHTML=att+': '+'<textarea style="vertical-align:middle" onkeyup="dsrip.enterTextArea(this,event)">'+dt[att]+'</textarea> <span style="color:red" onclick="dsrip.removeMyParent(this)">X</span>'
         sp.appendChild(p)
     })
+    //add field option
+    var p = dsrip.dom('p'); p.id='adding_'+k+'.newField'
+    p.innerHTML='<input style="color:blue" value="new field" size=10>: '+'<textarea style="vertical-align:middle" id="olala" onkeyup="dsrip.enterTextArea(this,event)"></textarea>'
+    sp.appendChild(p)
 
     // if there is no Save button add it
     if(!dsrip.byId('save_'+k)){
@@ -128,9 +170,8 @@ dsrip.editLi=function(that){
         dsrip.byId('head_'+k).appendChild(spSave)
         //dsrip.byId('edit_'+k).innerHTML+=' save';
     }
-
-    4
 }
+
 
 dsrip.saveLi=function(that){
     // save vals
@@ -142,16 +183,38 @@ dsrip.saveLi=function(that){
     for (var i = 0 ; i<pp.length;i++){
         if(pp[i].id.substring(0,pp[i].id.indexOf('_'))=='editing'){ // to discount the possibility that other types of children were added
             j++
-            doc[pp[i].id.substring(n)]=$('textarea',pp[i])[0].value
+            if(pp[i].id.slice(pp[i].id.length-9)!=="new field"){
+                doc[pp[i].id.substring(n)]=$('textarea',pp[i])[0].value
+            }        
         }
-        4//if(pp[i].id.)
+    }
+    // look for new new field
+    var nf = dsrip.byId('adding_'+k+'.newField').getElementsByTagName('input')[0].value
+    if((nf!="new field")&nf.length>0){ // if the default name was changed
+        doc[nf]=dsrip.byId('adding_'+k+'.newField').getElementsByTagName('textarea')[0].value
     }
     dsrip.byId('val_'+k).beingEdited=false
     dsrip.ref.child("/dataResources/"+k).set(doc) // save new contents
+    dsrip.li.update(k)
     // remove save thrigger just pressed
-    dsrip.removeMe(that) 
+    // dsrip.removeMe(that) 
     
 }
+
+dsrip.addResource=function(that,evt){
+    if(evt.keyCode==13&(!evt.shiftKey)){
+        // create new resource
+        //dsrip.ref.child("/dataResources/"+that.value).set({lala:[1,2,3]})
+        var k = that.value;
+        dsrip.ref.child("/dataResources/lele").once('value',function(x){
+            console.log(x.numChildren())
+            if(x.numChildren()==0){ // safe to create resource
+                dsrip.ref.child("/dataResources/"+k).set({"new field":"rename and populate new field below"})
+            }
+        })
+    }
+}
+
 
 dsrip.removeMyParent=function(that){
     var rmSoon=function(){
