@@ -88,7 +88,7 @@ dsrip.li.update=function(k,ordDiv){
 // everytime there is an edit in teh dataResources, update it:
 dsrip.ref.child("/dataResources").on("child_changed",function(x){
     var v = x.val(), k = x.name()
-    console.log(k +' updated:',JSON.stringify(v,false,1));
+    //console.log(k +' updated:',JSON.stringify(v,false,1));
     dsrip.dataResources[k]=v;
     dsrip.li.update(k);
 })
@@ -96,7 +96,7 @@ dsrip.ref.child("/dataResources").on("child_changed",function(x){
 // if child added, append it to the list
 dsrip.ref.child("/dataResources").on("child_added",function(x){
     var v = x.val(), k = x.name()
-    console.log(k +' updated:',JSON.stringify(v,false,1));
+    //console.log(k +' updated:',JSON.stringify(v,false,1));
     dsrip.dataResources[k]=v;
     var li = dsrip.li(k);
     if(li){
@@ -134,7 +134,7 @@ dsrip.doSearch=function(s){ // go over each entry and hide it or show it dependi
 }
 dsrip.enterTextArea=function(that,evt){
     if(evt.keyCode==13&(!evt.shiftKey)){
-        console.log(that)
+        //console.log(that)
         var k = that.parentElement.parentElement.parentElement.id;
         that.value=that.value.slice(0,-1)
         dsrip.byId('save_'+k).click();
@@ -206,10 +206,14 @@ dsrip.addResource=function(that,evt){
         // create new resource
         //dsrip.ref.child("/dataResources/"+that.value).set({lala:[1,2,3]})
         var k = that.value;
-        dsrip.ref.child("/dataResources/lele").once('value',function(x){
-            console.log(x.numChildren())
+        dsrip.ref.child("/dataResources/"+k).once('value',function(x){
+            //console.log(x.numChildren())
             if(x.numChildren()==0){ // safe to create resource
                 dsrip.ref.child("/dataResources/"+k).set({"new field":"rename and populate new field below"})
+            } else{ // it exists already
+                var li = dsrip.byId(k); li.hidden=false
+                li.parentNode.insertBefore(li,li.parentNode.firstChild)
+                dsrip.byId('edit_'+li.id).click() // edit it
             }
         })
     }
