@@ -39,7 +39,7 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
     }
     console.log(n+' data resources available')
     //if($('#numResources').length==0){$('<span id="numResources"></span>').appendTo('#dsripDiv')}
-    dsrip.byId('dsripHeader').textContent = 'DSRIP data resources ('+n+')';
+    dsrip.byId('dsripHeader').innerHTML = '<h3><a href="https://github.com/mathbiol/dsrip" target=_blank>*</a>DSRIP data resources ('+n+')</h3>';
     if(!dsrip.byId('listResources')){ // Resource list template
         var qq = document.location.search.match(/q\=([^\=\&]+)/)
         if(!qq){qq=[]}
@@ -66,23 +66,95 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
 dsrip.li=function(id,ordDiv){ // processing of each element of the list for the first time
     if(!ordDiv){ordDiv = dsrip.byId('orderedResources')}
     if(!dsrip.byId(id)){ // if it doesn't exist, create it
-        $(ordDiv).append($('<li id="'+id+'"><span id="head_'+id+'"><b style="color:navy"><a href="'+decodeURIComponent(id)+'" target=_blank>'+decodeURIComponent(id)+'</a></b> <span style="color:green;background-color:yellow" id="edit_'+id+'" onclick="dsrip.editLi(this)">Edit</span></span><br><span id="val_'+id+'">'+
-        JSON.stringify(dsrip.dataResources[id],false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')
-        +'</span></li>'))
+        //$(ordDiv).append($('<li id="'+id+'"><span id="head_'+id+'"><b style="color:navy"><a href="'+decodeURIComponent(id)+'" target=_blank>'+decodeURIComponent(id)+'</a></b> <span style="color:green;background-color:yellow" id="edit_'+id+'" onclick="dsrip.editLi(this)">Edit</span></span><br><span id="val_'+id+'">'+
+        //JSON.stringify(dsrip.dataResources[id],false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')
+        //+'</span></li>'))
+        dsrip.stringifyLi(id)
         dsrip.fillSearchTarget(id);
         return dsrip.byId(id)
     }
 }
 
+dsrip.stringifyLi=function(k,doc,ol){
+    if(!doc){doc=dsrip.dataResources[k]}
+    if(!ol){ol=dsrip.byId('orderedResources')}
+    var url = decodeURIComponent(k);
+    //$(ol).append($('<li id="'+k+'"><span id="head_'+k+'"><b style="color:navy"><a href="'+url+'" target=_blank>'+url+'</a></b> <span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span></span><br><span id="val_'+k+'">'+
+    //    JSON.stringify(doc,false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')
+    //    +'</span></li>'))
+    var li = dsrip.dom('li'); li.id=k
+    li.innerHTML = '<span id="head_'+k+'"><b style="color:navy"><a href="'+url+'" target=_blank>'+url+'</a></b> <span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span></span>'
+    var tb = dsrip.doc2table(doc);tb.id='val_'+k;li.appendChild(tb)
+    $(ol).append($(li))
+}
+
+dsrip.doc2table=function(doc){
+    var tb=document.createElement('table')
+    var tby=document.createElement('tbody');tb.appendChild(tby);
+    Object.getOwnPropertyNames(doc).map(function(p){
+        var tr=document.createElement('tr');tby.appendChild(tr); 
+        var td1=document.createElement('td');tr.appendChild(td1);
+        td1.style.color='blue'
+        var td2=document.createElement('td');tr.appendChild(td2);
+        td2.style.color='green'
+        td1.textContent=p;td2.textContent=doc[p]
+    })
+    return tb
+}
+
 dsrip.li.update=function(k,ordDiv){
    //if(!ordDiv){ordDiv = dsrip.byId('orderedResources')}
    if(!dsrip.byId('val_'+k).beingEdited){
-       dsrip.byId(k).innerHTML='<span id="head_'+k+'"><a style="color:red" href="'+decodeURIComponent(k)+'" target=_blank>'+decodeURIComponent(k)+'</a> <span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span></span><br><span id="val_'+k+'">'+JSON.stringify(dsrip.dataResources[k],false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')+'</span>'
+       //dsrip.byId(k).innerHTML='<span id="head_'+k+'"><a style="color:red" href="'+decodeURIComponent(k)+'" target=_blank>'+decodeURIComponent(k)+'</a> <span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span></span><br><span id="val_'+k+'">'+JSON.stringify(dsrip.dataResources[k],false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')+'</span>'
+       //var url = decodeURIComponent(k), li=dsrip.byId(k), doc=dsrip.dataResources[k]
+       //li.innerHTML='<span id="head_'+k+'"><b style="color:navy"><a href="'+url+'" target=_blank>'+url+'</a></b> <span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span></span>'
+       //var tb2 = dsrip.doc2table(doc);tb.id='val_'+k;li.appendChild(tb);
+       var tb = dsrip.byId('val_'+k)
+       dsrip.compareTable(tb,dsrip.dataResources[k]);
    }else{
        dsrip.byId('val_'+k).style.color='red'
        $('#val_'+k+' > p > textarea').css('color','red')
    }
    dsrip.fillSearchTarget(k)
+}
+
+dsrip.compareTable=function(tb,doc){ // edit table according to updated doc
+    // identify rows
+    var tr = tb.children[0].children
+    for(var i=0;i<tr.length;i++){
+        tr[i].id=tb.id+'.'+tr[i].children[0].textContent
+        tr[i].children[0].id=tr[i].id+'.0'
+        tr[i].children[1].id=tr[i].id+'.1'
+    }
+    // change color of updated fields
+    for(var i=0;i<tr.length;i++){
+        var f = tr[i].children[0].textContent;
+        if(doc[f]){
+            if(doc[f]!=tr[i].children[1].textContent){
+                tr[i].children[1].style.color="red"
+                tr[i].children[1].textContent=doc[f]
+            } 
+        } else {
+            tr[i].style.textDecoration='line-through'
+            tr[i].children[0].style.color="red"
+            tr[i].children[1].style.color="red"
+            4
+        }
+    }
+    // find new fields now
+    Object.getOwnPropertyNames(doc).map(function(p){
+        if(!dsrip.byId(tb.id+'.'+p)){
+            var trp=document.createElement('tr');tb.children[0].appendChild(trp)
+            var td0=document.createElement('td');trp.appendChild(td0)
+            var td1=document.createElement('td');trp.appendChild(td1)
+            td0.textContent=p;td0.style.color="red"
+            td1.textContent=doc[p];td1.style.color="red"
+            4
+        }
+    })
+
+
+   4
 }
 
 // everytime there is an edit in teh dataResources, update it:
@@ -194,6 +266,8 @@ dsrip.saveLi=function(that){
         doc[nf]=dsrip.byId('adding_'+k+'.newField').getElementsByTagName('textarea')[0].value
     }
     dsrip.byId('val_'+k).beingEdited=false
+    dsrip.removeMe('save_'+k)// remove save trigger
+    dsrip.byId('val_'+k).innerHTML=dsrip.doc2table(dsrip.dataResources[k]).innerHTML // rebuild old table
     dsrip.ref.child("/dataResources/"+k).set(doc) // save new contents
     dsrip.li.update(k)
     // remove save thrigger just pressed
@@ -205,11 +279,11 @@ dsrip.addResource=function(that,evt){
     if(evt.keyCode==13&(!evt.shiftKey)){
         // create new resource
         //dsrip.ref.child("/dataResources/"+that.value).set({lala:[1,2,3]})
-        var k = that.value;
+        var k = dsrip.encodeURL(that.value);
         dsrip.ref.child("/dataResources/"+k).once('value',function(x){
             //console.log(x.numChildren())
             if(x.numChildren()==0){ // safe to create resource
-                dsrip.ref.child("/dataResources/"+k).set({"new field":"rename and populate new field below"})
+                dsrip.ref.child("/dataResources/"+k).set({"new field":"rename and populate new field"})
             } else{ // it exists already
                 var li = dsrip.byId(k); li.hidden=false
                 li.parentNode.insertBefore(li,li.parentNode.firstChild)
@@ -228,8 +302,9 @@ dsrip.removeMyParent=function(that){
 }
 
 dsrip.removeMe=function(el){
+    if(typeof(el)=="string"){el=document.getElementById(el)}
     var rmSoon=function(){
-       el.parentElement.removeChild(el) 
+       el.parentElement.removeChild(el)
     }
     setTimeout(rmSoon,100)
 }
