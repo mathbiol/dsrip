@@ -45,6 +45,7 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
         if(!qq){qq=[]}
         var q="";if (qq.length==2){var q = decodeURIComponent(qq[1])}
         dsrip.append('<div id="listResources">Find <input id="searchResources" value="'+q+'" onclick="dsrip.doSearch(this.value)"> Add <input id="addResource" onkeyup="dsrip.addResource(this,event)"> <ol id="orderedResources"></ol></div>');
+        //if(qq.length==2){$('#searchResources').click()}
     }
     //dsrip.ref.once('value',function(x){
     dsrip.dataResources = x.val() // update the reference data, this may not be the efficinet way to do it
@@ -59,16 +60,13 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
         dsrip.doSearch(this.value);
     }
     // runn it if armed already
-    if(q.length>0){dsrip.doSearch(dsrip.encodeURL(dsrip.byId('searchResources').value))}
+    if(q.length>0){dsrip.doSearch(dsrip.byId('searchResources').value)}
     
 })
 
 dsrip.li=function(id,ordDiv){ // processing of each element of the list for the first time
     if(!ordDiv){ordDiv = dsrip.byId('orderedResources')}
     if(!dsrip.byId(id)){ // if it doesn't exist, create it
-        //$(ordDiv).append($('<li id="'+id+'"><span id="head_'+id+'"><b style="color:navy"><a href="'+decodeURIComponent(id)+'" target=_blank>'+decodeURIComponent(id)+'</a></b> <span style="color:green;background-color:yellow" id="edit_'+id+'" onclick="dsrip.editLi(this)">Edit</span></span><br><span id="val_'+id+'">'+
-        //JSON.stringify(dsrip.dataResources[id],false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')
-        //+'</span></li>'))
         dsrip.stringifyLi(id)
         dsrip.fillSearchTarget(id);
         return dsrip.byId(id)
@@ -79,11 +77,9 @@ dsrip.stringifyLi=function(k,doc,ol){
     if(!doc){doc=dsrip.dataResources[k]}
     if(!ol){ol=dsrip.byId('orderedResources')}
     var url = decodeURIComponent(k);
-    //$(ol).append($('<li id="'+k+'"><span id="head_'+k+'"><b style="color:navy"><a href="'+url+'" target=_blank>'+url+'</a></b> <span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span></span><br><span id="val_'+k+'">'+
-    //    JSON.stringify(doc,false,1).replace(/,/g,'<br>').replace(/[{}]/g,'')
-    //    +'</span></li>'))
     var li = dsrip.dom('li'); li.id=k
     li.innerHTML = '<span id="head_'+k+'"><b style="color:navy"><a href="'+url+'" target=_blank>'+url+'</a></b> <span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span></span>'
+    if(doc["new field"]){delete doc["new field"]}
     var tb = dsrip.doc2table(doc);tb.id='val_'+k;li.appendChild(tb)
     $(ol).append($(li))
 }
@@ -111,10 +107,10 @@ dsrip.li.update=function(k,ordDiv){
        //var tb2 = dsrip.doc2table(doc);tb.id='val_'+k;li.appendChild(tb);
        var tb = dsrip.byId('val_'+k)
        dsrip.compareTable(tb,dsrip.dataResources[k]);
-   }else{
-       dsrip.byId('val_'+k).style.color='red'
-       $('#val_'+k+' > p > textarea').css('color','red')
+   }else{ // warn of conflicting edit in progress
+       $(dsrip.byId('val_'+k)).find('span,textarea,input').css('color','red')
    }
+   if(!dsrip.byId('edit_'+k)){dsrip.byId(k).children[0].innerHTML+='<span style="color:green;background-color:yellow" id="edit_'+k+'" onclick="dsrip.editLi(this)">Edit</span>'}
    dsrip.fillSearchTarget(k)
 }
 
@@ -129,6 +125,7 @@ dsrip.compareTable=function(tb,doc){ // edit table according to updated doc
     // change color of updated fields
     for(var i=0;i<tr.length;i++){
         var f = tr[i].children[0].textContent;
+        if(doc){
         if(doc[f]){
             if(doc[f]!=tr[i].children[1].textContent){
                 tr[i].children[1].style.color="red"
@@ -138,7 +135,7 @@ dsrip.compareTable=function(tb,doc){ // edit table according to updated doc
             tr[i].style.textDecoration='line-through'
             tr[i].children[0].style.color="red"
             tr[i].children[1].style.color="red"
-            4
+        }
         }
     }
     // find new fields now
@@ -149,12 +146,8 @@ dsrip.compareTable=function(tb,doc){ // edit table according to updated doc
             var td1=document.createElement('td');trp.appendChild(td1)
             td0.textContent=p;td0.style.color="red"
             td1.textContent=doc[p];td1.style.color="red"
-            4
         }
     })
-
-
-   4
 }
 
 // everytime there is an edit in teh dataResources, update it:
@@ -183,19 +176,23 @@ dsrip.ref.child("/dataResources").on("child_removed",function(x){
     var k = x.name();
     var li = dsrip.byId(k);
     if(li){
-        dsrip.removeMe(li)
+        //dsrip.removeMe(li)
+        $(li).find('td,a').css('color','red').css('text-decoration','line-through')
+        $(li).find('#edit_'+k).remove()
         delete dsrip.dataResources[k]
     }
 })
 
 dsrip.fillSearchTarget=function(k){ // concatenate values of all fields of an entry as targets for search
-    dsrip.searchTarget[k]=k;
+    dsrip.searchTarget[k]=decodeURIComponent(k);
     Object.getOwnPropertyNames(dsrip.dataResources[k]).map(function(p){
-        dsrip.searchTarget[k]+=" "+dsrip.dataResources[k][p]
+        dsrip.searchTarget[k]+=" <"+p+">:"+dsrip.dataResources[k][p]
     })
+    dsrip.searchTarget[k]=dsrip.encodeURL(dsrip.searchTarget[k])
 }
 
 dsrip.doSearch=function(s){ // go over each entry and hide it or show it depending on search match   
+    s = dsrip.encodeURL(s)
     Object.getOwnPropertyNames(dsrip.searchTarget).map(function(k){
         var li = dsrip.byId(k);
         if(dsrip.searchTarget[k].match(s)||s.length==0){
@@ -264,7 +261,7 @@ dsrip.saveLi=function(that){
     var nf = dsrip.byId('adding_'+k+'.newField').getElementsByTagName('input')[0].value
     if((nf!="new field")&nf.length>0){ // if the default name was changed
         doc[nf]=dsrip.byId('adding_'+k+'.newField').getElementsByTagName('textarea')[0].value
-    }
+    } else if(nf="new field"){delete doc[nf]}
     dsrip.byId('val_'+k).beingEdited=false
     dsrip.removeMe('save_'+k)// remove save trigger
     dsrip.byId('val_'+k).innerHTML=dsrip.doc2table(dsrip.dataResources[k]).innerHTML // rebuild old table
@@ -287,7 +284,8 @@ dsrip.addResource=function(that,evt){
             } else{ // it exists already
                 var li = dsrip.byId(k); li.hidden=false
                 li.parentNode.insertBefore(li,li.parentNode.firstChild)
-                dsrip.byId('edit_'+li.id).click() // edit it
+                dsrip.editLi(dsrip.byId(that.value))
+                //dsrip.byId('edit_'+li.id).click() // edit it
             }
         })
     }
