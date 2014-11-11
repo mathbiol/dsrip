@@ -128,7 +128,7 @@ dsrip.compareTable=function(tb,doc){ // edit table according to updated doc
         if(doc){
         if(doc[f]){
             if(doc[f]!=tr[i].children[1].textContent){
-                tr[i].children[1].style.color="red"
+                tr[i].children[1].style.color="purple"
                 tr[i].children[1].textContent=doc[f]
             } 
         } else {
@@ -144,8 +144,8 @@ dsrip.compareTable=function(tb,doc){ // edit table according to updated doc
             var trp=document.createElement('tr');tb.children[0].appendChild(trp)
             var td0=document.createElement('td');trp.appendChild(td0)
             var td1=document.createElement('td');trp.appendChild(td1)
-            td0.textContent=p;td0.style.color="red"
-            td1.textContent=doc[p];td1.style.color="red"
+            td0.textContent=p;td0.style.color="purple"
+            td1.textContent=doc[p];td1.style.color="purple"
         }
     })
 }
