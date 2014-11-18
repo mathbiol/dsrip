@@ -5,6 +5,25 @@ dsrip={
     dataResources:{}
 };
 
+
+// authentication
+dsrip.auth=dsrip.ref.getAuth();
+console.log(dsrip.auth)
+if(!dsrip.auth){
+    alert("Make sure to allow popups for login")
+    dsrip.ref.authWithOAuthPopup("google", function(error, authData) { 
+    console.log('Auth:',error,authData);
+    document.location.reload()
+    }, 
+    {
+        remember: "sessionOnly",
+        scope: "email"
+    })
+}
+
+// all onboard from hereon
+if(dsrip.auth){
+// slight variation on encoding to account for firebase dislike of dots
 dsrip.encodeURL=function(u){
     return encodeURIComponent(u).replace(/\./g,'%2E')
 }
@@ -39,7 +58,7 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
     }
     console.log(n+' data resources available')
     //if($('#numResources').length==0){$('<span id="numResources"></span>').appendTo('#dsripDiv')}
-    dsrip.byId('dsripHeader').innerHTML = '<h3><a href="https://github.com/mathbiol/dsrip" target=_blank>*</a>DSRIP data resources ('+n+')</h3>';
+    dsrip.byId('dsripHeader').innerHTML = '<h3><a href="https://github.com/mathbiol/dsrip" target=_blank>*</a>DSRIP data resources<br><span style="color:green;font-size:12px">'+n+' available to <span id="emailAuth" style="color:blue">'+dsrip.auth.google.email+'</span> <br>as of '+Date()+'</span></span></h3>';
     if(!dsrip.byId('listResources')){ // Resource list template
         var qq = document.location.search.match(/q\=([^\=\&]+)/)
         if(!qq){qq=[]}
@@ -139,6 +158,7 @@ dsrip.compareTable=function(tb,doc){ // edit table according to updated doc
         }
     }
     // find new fields now
+    if(doc){
     Object.getOwnPropertyNames(doc).map(function(p){
         if(!dsrip.byId(tb.id+'.'+p)){
             var trp=document.createElement('tr');tb.children[0].appendChild(trp)
@@ -148,6 +168,7 @@ dsrip.compareTable=function(tb,doc){ // edit table according to updated doc
             td1.textContent=doc[p];td1.style.color="purple"
         }
     })
+    }
 }
 
 // everytime there is an edit in teh dataResources, update it:
@@ -185,9 +206,11 @@ dsrip.ref.child("/dataResources").on("child_removed",function(x){
 
 dsrip.fillSearchTarget=function(k){ // concatenate values of all fields of an entry as targets for search
     dsrip.searchTarget[k]=decodeURIComponent(k);
+    if(dsrip.dataResources[k]){
     Object.getOwnPropertyNames(dsrip.dataResources[k]).map(function(p){
         dsrip.searchTarget[k]+=" <"+p+">:"+dsrip.dataResources[k][p]
     })
+    }
     dsrip.searchTarget[k]=dsrip.encodeURL(dsrip.searchTarget[k])
 }
 
@@ -301,10 +324,17 @@ dsrip.removeMyParent=function(that){
 
 dsrip.removeMe=function(el){
     if(typeof(el)=="string"){el=document.getElementById(el)}
+    if(el){
     var rmSoon=function(){
+       if(el.parentElement){
        el.parentElement.removeChild(el)
+       }
     }
     setTimeout(rmSoon,100)
+    }
 }
+
+}
+
 
 
