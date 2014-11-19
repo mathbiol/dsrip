@@ -40,10 +40,21 @@ dsrip.dom=function(el){
 
 dsrip.logout=function(){
     console.log('logout');
-    alert('Connection closed, if you don\'t want to be logged back in automatically make sure you also logout of Google')
+    alert('Connection closed. If you don\'t want to be logged back in automatically make sure you also logout of Google')
     dsrip.ref.unauth();
     location.href="https://github.com/mathbiol/dsrip"
     
+}
+
+dsrip.googleId=function(){
+    console.log(dsrip.auth.uid)
+    if(dsrip.byId('googleID').textContent=="googleID"){
+        dsrip.byId('googleID').textContent=dsrip.auth.uid
+    } else {dsrip.byId('googleID').textContent="googleID"}
+}
+
+dsrip.email=function(){
+    window.open('mailto:'+dsrip.byId('emailAuth').textContent+'?subject=DSRIP catalog user activation&body=['+dsrip.auth.uid+']%0D%0A ...')
 }
 
 dsrip.append=function(html){
@@ -68,7 +79,7 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
     }
     console.log(n+' data resources available')
     //if($('#numResources').length==0){$('<span id="numResources"></span>').appendTo('#dsripDiv')}
-    dsrip.byId('dsripHeader').innerHTML = '<h3><a href="https://github.com/mathbiol/dsrip" target=_blank>*</a>DSRIP data resources<br><span style="color:green;font-size:12px">'+n+' available to <span id="emailAuth" style="color:blue">'+dsrip.auth.google.email+'</span> <button onclick="dsrip.logout()">logout</button> <br>as of '+Date()+'</span></span></h3>';
+    dsrip.byId('dsripHeader').innerHTML = '<h3><a href="https://github.com/mathbiol/dsrip" target=_blank>*</a>DSRIP data resources<br><span style="color:green;font-size:12px">'+n+' available to <span id="emailAuth" style="color:blue" onclick="dsrip.email()">'+dsrip.auth.google.email+'</span> <button onclick="dsrip.logout()">logout</button> [<span style="color:blue" id="googleID" onclick="dsrip.googleId()">googleID</span>] <br>as of '+Date()+'</span></span></h3>';
     if(!dsrip.byId('listResources')){ // Resource list template
         var qq = document.location.search.match(/q\=([^\=\&]+)/)
         if(!qq){qq=[]}
