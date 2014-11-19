@@ -54,7 +54,7 @@ dsrip.googleId=function(){
 }
 
 dsrip.email=function(){
-    window.open('mailto:'+dsrip.byId('emailAuth').textContent+'?subject=DSRIP catalog user activation&body=(uid:"'+dsrip.auth.uid+'",email:"'+dsrip.auth.google.email+'")%0D%0A ...')
+    window.open('mailto:jalmeida@mathbiol.org?subject=DSRIP catalog user activation&body=(uid:"'+dsrip.auth.uid+'",email:"'+dsrip.auth.google.email+'")%0D%0A ...')
 }
 
 dsrip.append=function(html){
