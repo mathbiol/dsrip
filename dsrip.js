@@ -23,7 +23,7 @@ if(!dsrip.auth){
         remember: "sessionOnly",
         scope: "email"
     })
-}else{
+}else{    
 
 // slight variation on encoding to account for firebase dislike of dots
 dsrip.encodeURL=function(u){
@@ -54,7 +54,7 @@ dsrip.googleId=function(){
 }
 
 dsrip.email=function(){
-    window.open('mailto:'+dsrip.byId('emailAuth').textContent+'?subject=DSRIP catalog user activation&body=['+dsrip.auth.uid+', '+dsrip.auth.google.email+']%0D%0A ...')
+    window.open('mailto:'+dsrip.byId('emailAuth').textContent+'?subject=DSRIP catalog user activation&body=(uid:"'+dsrip.auth.uid+'",email:"'+dsrip.auth.google.email+'")%0D%0A ...')
 }
 
 dsrip.append=function(html){
@@ -354,6 +354,9 @@ dsrip.removeMe=function(el){
     setTimeout(rmSoon,100)
     }
 }
+
+dsrip.byId('dsripHeader').innerHTML = '<h3><a href="https://github.com/mathbiol/dsrip" target=_blank>*</a>DSRIP data resources<br><span style="color:green;font-size:12px">logged in as <span id="emailAuth" style="color:blue" onclick="dsrip.email()">'+dsrip.auth.google.email+'</span> <button onclick="dsrip.logout()">logout</button> [<span style="color:blue" id="googleID" onclick="dsrip.googleId()">googleID</span>] <br>at '+Date()+'</span></span></h3>';
+
 
 }
 
