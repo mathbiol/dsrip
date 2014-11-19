@@ -10,19 +10,21 @@ dsrip={
 dsrip.auth=dsrip.ref.getAuth();
 console.log(dsrip.auth)
 if(!dsrip.auth){
-    alert("Make sure to allow popups for login")
+    document.body.innerHTML+='<p style="color:blue">Authenticating ...</p><p style="color:red">Make sure pop-ups are not blocked for this site</p><button onclick="document.location.reload()">reload</button>'
     dsrip.ref.authWithOAuthPopup("google", function(error, authData) { 
     console.log('Auth:',error,authData);
-    document.location.reload()
+    if(authData){
+        console.log('reload',error,authData)
+        document.location.reload()
+    }
+    
     }, 
     {
         remember: "sessionOnly",
         scope: "email"
     })
-}
+}else{
 
-// all onboard from hereon
-if(dsrip.auth){
 // slight variation on encoding to account for firebase dislike of dots
 dsrip.encodeURL=function(u){
     return encodeURIComponent(u).replace(/\./g,'%2E')
@@ -34,6 +36,14 @@ dsrip.byId=function(id){
 }
 dsrip.dom=function(el){
     return document.createElement(el)
+}
+
+dsrip.logout=function(){
+    console.log('logout');
+    alert('Connection closed, if you don\'t want to be logged back in automatically make sure you also logout of Google')
+    dsrip.ref.unauth();
+    location.href="https://github.com/mathbiol/dsrip"
+    
 }
 
 dsrip.append=function(html){
@@ -58,7 +68,7 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
     }
     console.log(n+' data resources available')
     //if($('#numResources').length==0){$('<span id="numResources"></span>').appendTo('#dsripDiv')}
-    dsrip.byId('dsripHeader').innerHTML = '<h3><a href="https://github.com/mathbiol/dsrip" target=_blank>*</a>DSRIP data resources<br><span style="color:green;font-size:12px">'+n+' available to <span id="emailAuth" style="color:blue">'+dsrip.auth.google.email+'</span> <br>as of '+Date()+'</span></span></h3>';
+    dsrip.byId('dsripHeader').innerHTML = '<h3><a href="https://github.com/mathbiol/dsrip" target=_blank>*</a>DSRIP data resources<br><span style="color:green;font-size:12px">'+n+' available to <span id="emailAuth" style="color:blue">'+dsrip.auth.google.email+'</span> <button onclick="dsrip.logout()">logout</button> <br>as of '+Date()+'</span></span></h3>';
     if(!dsrip.byId('listResources')){ // Resource list template
         var qq = document.location.search.match(/q\=([^\=\&]+)/)
         if(!qq){qq=[]}
