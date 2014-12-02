@@ -79,7 +79,7 @@ dsrip.ref.child("/dataResources").once("value",function(x){ // everytime somethi
     }
     console.log(n+' data resources available')
     //if($('#numResources').length==0){$('<span id="numResources"></span>').appendTo('#dsripDiv')}
-    dsrip.byId('dsripHeader').innerHTML = '<h3><a href="https://github.com/mathbiol/dsrip" target=_blank>*</a>DSRIP data resources<br><span style="color:green;font-size:12px">'+n+' available to <span id="emailAuth" style="color:blue" onclick="dsrip.email()">'+dsrip.auth.google.email+'</span> <button onclick="dsrip.logout()">logout</button> [<span style="color:blue" id="googleID" onclick="dsrip.googleId()">googleID</span>] [<a href="https://security.google.com/settings/security/permissions" target=_blank>OAUTH</a>] <br>as of '+Date()+'</span></span></h3>';
+    dsrip.byId('dsripHeader').innerHTML = '<h3>[<a href="https://github.com/mathbiol/dsrip" target=_blank>source</a>] DSRIP data resources<br><span style="color:green;font-size:12px">'+n+' available to <span id="emailAuth" style="color:blue" onclick="dsrip.email()">'+dsrip.auth.google.email+'</span> <button onclick="dsrip.logout()">logout</button> [<span style="color:blue" id="googleID" onclick="dsrip.googleId()">googleID</span>][<a href="https://security.google.com/settings/security/permissions" target=_blank>OAUTH</a>][<a href="http://www.youtube.com/watch?v=nZrGnphn7ww" target=_blank>Video</a>] <br>as of '+Date()+'</span></span></h3>';
     if(!dsrip.byId('listResources')){ // Resource list template
         var qq = document.location.search.match(/q\=([^\=\&]+)/)
         if(!qq){qq=[]}
